@@ -2,17 +2,23 @@
 
 var timeInit = 1000;     // initial wait before typing first line
 var timeGap = 1000;      // wait time between each line
-var timeChar = 70;       // time until next letter
+var timeChar = 40;       // time until next letter
 
 var cursorChar = '&#9608;';
 
-var originText = [document.getElementById('line1').innerHTML, document.getElementById('line2').innerHTML];
+var originId = ['line1', 'line2'];
+var originText = [];
+for (var i = 0; i < originId.length; i++) {
+  originText.push(document.getElementById(originId[i]).innerHTML);
+}
+
+var cursorLine = document.getElementById('cursor-line');
 
 var currentTimeout;
 var showCursor;
 
-var typeWriter = function(id, index) {
-  var loc = document.getElementById(id);
+var typeWriter = function(index) {
+  var loc = document.getElementById(originId[index]);
   var fullText = originText[index];
   var letter = 0;
 
@@ -23,7 +29,7 @@ var typeWriter = function(id, index) {
       letter += 1;
       var showText = fullText.substring(0, letter);
 
-      // stops the function from recurring when all letters are typed
+      // stops the function from self-calling when all letters are typed
       if (letter === fullText.length) {
         loc.innerHTML = '&gt;&gt; ' + showText;
       } else {
@@ -32,54 +38,46 @@ var typeWriter = function(id, index) {
       }
     }, timeChar);
   };
+
   typeLetter();
 
   // show cursor on next line
-  var totalTime = fullText.length * timeChar + 100;
+  var totalTime = fullText.length * timeChar + timeChar;
   showCursor = setTimeout(function() {
     document.getElementById('cursor-line').className = 'visible';
   }, totalTime);
 };
 
-var typeLine1 = setTimeout(function() {
-  document.getElementById('cursor-line').className = 'hidden';
-  typeWriter('line1', 0);
-}, timeInit);
+var delayTime = [timeInit];
+var cumulativeDelayTime = [timeInit];
+for (var i = 0; i < originId.length; i++) {
+  var elapsedTimeLine = originText[i].length * timeChar + timeGap + timeChar * 2;
+  delayTime.push(elapsedTimeLine);
+  var sum = 0;
+  for (var j = 0; j < delayTime.length; j++) {
+    sum += delayTime[j];
+  };
+  cumulativeDelayTime.push(sum);
+};
 
-var delayTime1 = timeInit
-  + originText[0].length * timeChar
-  + 50 + timeGap;
 
-var typeLine2 = setTimeout(function() {
-  document.getElementById('cursor-line').className = 'hidden';
-  typeWriter('line2', 1);
-}, delayTime1);
+var typeLineTimeout = new Array();
+for (var i = 0; i < originId.length; i++) {
+  typeLineTimeout[i] = setTimeout((function(index) {
+    return function() {
+      cursorLine.className = 'hidden';
+      typeWriter(index);
+    }
+  })(i), cumulativeDelayTime[i]);
 
-var delayTime2 = originText[1].length * timeChar + timeGap;
-
-// specific for index.html
-var showLogin;
-if (document.getElementById('agent-login')) {
-  showLogin = setTimeout(function() {
-    document.getElementById('agent-login').className = 'visible';
-  }, delayTime1 + delayTime2);
-}
-
-// Specific for Fail.html
-var showReturnButton;
-if (document.getElementById('return-button')) {
-  showReturnButton = setTimeout(function() {
-    document.getElementById('return-button').className = 'visible';
-  }, delayTime1 + delayTime2);
-}
+};
 
 // stops all timeouts
 var skip = function() {
   clearTimeout(currentTimeout);
   clearTimeout(showCursor);
-  clearTimeout(typeLine1);
-  clearTimeout(typeLine2);
-  clearTimeout(showLogin);
+  clearTimeout(typeLineTimeout);
+
 };
 
 // rewrite text with value stored on page load
