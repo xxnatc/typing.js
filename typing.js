@@ -1,13 +1,12 @@
 // set typing speed and wait times
-
 var timeInit = 1000;     // initial wait before typing first line
 var timeGap = 1000;      // wait time between each line
 var timeChar = 40;       // time until next letter
 
 var cursorChar = '&#9608;';
 
-var originId = ['line1', 'line2'];
-var originText = [];
+var originId = ['line1', 'line2','line3'];
+var originText = new Array();
 for (var i = 0; i < originId.length; i++) {
   originText.push(document.getElementById(originId[i]).innerHTML);
 }
@@ -20,17 +19,17 @@ var showCursor;
 var typeWriter = function(index) {
   var loc = document.getElementById(originId[index]);
   var fullText = originText[index];
-  var letter = 0;
+  var letterCount = 0;
 
-  // this function types one letter per call, then calls the subsequent typeLetter()
+  // this function spits out one letter per call, then calls the subsequent typeLetter()
   var typeLetter = function() {
     currentTimeout = setTimeout(function() {
       loc.className = 'visible';
-      letter += 1;
-      var showText = fullText.substring(0, letter);
+      letterCount += 1;
+      var showText = fullText.substring(0, letterCount);
 
       // stops the function from self-calling when all letters are typed
-      if (letter === fullText.length) {
+      if (letterCount === fullText.length) {
         loc.innerHTML = '&gt;&gt; ' + showText;
       } else {
         loc.innerHTML = '&gt;&gt; ' + showText + '<span class="typed-cursor">' + cursorChar + '</span>';
@@ -48,6 +47,7 @@ var typeWriter = function(index) {
   }, totalTime);
 };
 
+// calculated time delays
 var delayTime = [timeInit];
 var cumulativeDelayTime = [timeInit];
 for (var i = 0; i < originId.length; i++) {
@@ -60,7 +60,7 @@ for (var i = 0; i < originId.length; i++) {
   cumulativeDelayTime.push(sum);
 };
 
-
+// calls setTimeout for each line
 var typeLineTimeout = new Array();
 for (var i = 0; i < originId.length; i++) {
   typeLineTimeout[i] = setTimeout((function(index) {
@@ -76,32 +76,31 @@ for (var i = 0; i < originId.length; i++) {
 var skip = function() {
   clearTimeout(currentTimeout);
   clearTimeout(showCursor);
-  clearTimeout(typeLineTimeout);
-
+  for (var i = 0; i < typeLineTimeout.length; i++) {
+    clearTimeout(typeLineTimeout[i]);
+  };
 };
 
 // rewrite text with value stored on page load
-var rewriteText = function(id, index) {
-  var loc = document.getElementById(id);
+
+// var rewriteText = function(index) {
+//   var loc = document.getElementById(originId[index]);
+//   loc.innerHTML = '&gt;&gt; ' + originText[index];
+//   loc.className = 'visible';
+// };
+
+var rewriteText = function(element, index, array) {
+  var loc = document.getElementById(element);
   loc.innerHTML = '&gt;&gt; ' + originText[index];
   loc.className = 'visible';
 };
 
+
 // trigger skip and rewrite on pressing enter or spacebar
-// $(document).keypress(function(key){
 window.onkeydown = function(key){
   if (key.which === 13 || key.which === 32) {
     skip();
-    rewriteText('line1', 0);
-    rewriteText('line2', 1);
+    originId.forEach(rewriteText);
     document.getElementById('cursor-line').className = 'visible';
-    
-    // restoring element specific to page
-    if (document.getElementById('agent-login')) {
-      document.getElementById('agent-login').className = 'visible';
-    }
-    if (document.getElementById('return-button')) {
-      document.getElementById('return-button').className = 'visible';
-    }
   }
 };
