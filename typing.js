@@ -1,12 +1,14 @@
 var typing = {
   options: {
-    // wait times and typing speed
     timeInit: 1000,     // initial wait before typing first line
     timeGap: 1000,      // wait time between each line
     timeChar: 40,       // time until next letter
 
-    cursorChar: '&#9608;',    // '&#9608;' for solid block, '|' for vertical line 
-    prefix: '&gt;&gt; '
+    cursorChar: '&#9608;', 
+    prefix: '&gt;&gt; ',
+    
+    skip: true,
+    skipKeys: [13, 32]   // default trigger keys are spacebar and enter
   }
 };
 
@@ -76,29 +78,32 @@ typing.initiate = function(listId) {
 
 };
 
-// stops all timeouts
-typing.stop = function() {
-  clearTimeout(this.currentTimeout);
-  clearTimeout(this.showCursor);
-  for (var i = 0; i < this.typeLineTimeout.length; i++) {
-    clearTimeout(this.typeLineTimeout[i]);
+if (typing.options.skip) {
+  // stops all timeouts
+  typing.stop = function() {
+    clearTimeout(this.currentTimeout);
+    clearTimeout(this.showCursor);
+    for (var i = 0; i < this.typeLineTimeout.length; i++) {
+      clearTimeout(this.typeLineTimeout[i]);
+    };
+  };
+
+  // rewrite text with value stored on page load
+  typing.rewrite = function(element, index, array) {
+    var loc = document.getElementById(element);
+    loc.innerHTML = typing.options.prefix + typing.originText[index];
+    loc.className = 'visible';
+  };
+
+  // trigger stop and rewrite on pressing specified keys
+  window.onkeydown = function(key){
+    if (typing.options.skipKeys.indexOf(key.which) > -1) {
+      typing.stop();
+      typing.originId.forEach(typing.rewrite);
+      typing.cursorLine.className = 'visible';
+    }
   };
 };
 
-// rewrite text with value stored on page load
-typing.rewrite = function(element, index, array) {
-  var loc = document.getElementById(element);
-  loc.innerHTML = typing.options.prefix + typing.originText[index];
-  loc.className = 'visible';
-};
-
-// trigger stop and rewrite on pressing enter or spacebar
-window.onkeydown = function(key){
-  if (key.which === 13 || key.which === 32) {
-    typing.stop();
-    typing.originId.forEach(typing.rewrite);
-    typing.cursorLine.className = 'visible';
-  }
-};
 
 typing.initiate(['line1', 'line2', 'line3']);
