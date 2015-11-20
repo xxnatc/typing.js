@@ -7,10 +7,10 @@ var typing = {
     cursorChar: '&#9608;', 
     prefix: '&gt;&gt; ',
 
-    skip: true,
+    skipOn: true,
     skipKeys: [13, 32],   // default trigger keys are spacebar and enter
 
-    endCursor: false
+    endCursor: true
   }
 };
 
@@ -78,7 +78,7 @@ typing.initiate = function(listId) {
 
 };
 
-if (typing.options.skip) {
+if (typing.options.skipOn) {
   // stops all timeouts
   typing.stop = function() {
     clearTimeout(this.idleWaitTimeout);
@@ -111,4 +111,5 @@ if (typing.options.skip) {
   };
 };
 
+typing.options.endCursor = true;
 typing.initiate(['line1', 'line2', 'line3']);
