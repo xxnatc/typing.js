@@ -1,106 +1,104 @@
-// set typing speed and wait times
-var timeInit = 1000;     // initial wait before typing first line
-var timeGap = 1000;      // wait time between each line
-var timeChar = 40;       // time until next letter
+var typing = {
+  options: {
+    // wait times and typing speed
+    timeInit: 1000,     // initial wait before typing first line
+    timeGap: 1000,      // wait time between each line
+    timeChar: 40,       // time until next letter
 
-var cursorChar = '&#9608;';
+    cursorChar: '&#9608;',    // '&#9608;' for solid block, '|' for vertical line 
+    prefix: '&gt;&gt; '
+  }
+};
 
-var originId = ['line1', 'line2','line3'];
-var originText = new Array();
-for (var i = 0; i < originId.length; i++) {
-  originText.push(document.getElementById(originId[i]).innerHTML);
-}
-
-var cursorLine = document.getElementById('cursor-line');
-
-var currentTimeout;
-var showCursor;
-
-var typeWriter = function(index) {
-  var loc = document.getElementById(originId[index]);
-  var fullText = originText[index];
+typing.typewriter = function(index) {
+  var loc = document.getElementById(this.originId[index]);
+  var fullText = this.originText[index];
   var letterCount = 0;
 
   // this function spits out one letter per call, then calls the subsequent typeLetter()
   var typeLetter = function() {
-    currentTimeout = setTimeout(function() {
+    typing.currentTimeout = setTimeout(function() {
       loc.className = 'visible';
       letterCount += 1;
       var showText = fullText.substring(0, letterCount);
 
-      // stops the function from self-calling when all letters are typed
       if (letterCount === fullText.length) {
-        loc.innerHTML = '&gt;&gt; ' + showText;
+        loc.innerHTML = typing.options.prefix + showText;
       } else {
-        loc.innerHTML = '&gt;&gt; ' + showText + '<span class="typed-cursor">' + cursorChar + '</span>';
+        loc.innerHTML = typing.options.prefix + showText + '<span class="typed-cursor">' + typing.options.cursorChar + '</span>';
         typeLetter();
       }
-    }, timeChar);
+    }, typing.options.timeChar);
   };
-
   typeLetter();
 
   // show cursor on next line
-  var totalTime = fullText.length * timeChar + timeChar;
-  showCursor = setTimeout(function() {
-    document.getElementById('cursor-line').className = 'visible';
+  var totalTime = fullText.length * typing.options.timeChar + typing.options.timeChar;
+  typing.showCursor = setTimeout(function() {
+    typing.cursorLine.className = 'visible';
   }, totalTime);
 };
 
-// calculated time delays
-var delayTime = [timeInit];
-var cumulativeDelayTime = [timeInit];
-for (var i = 0; i < originId.length; i++) {
-  var elapsedTimeLine = originText[i].length * timeChar + timeGap + timeChar * 2;
-  delayTime.push(elapsedTimeLine);
-  var sum = 0;
-  for (var j = 0; j < delayTime.length; j++) {
-    sum += delayTime[j];
+typing.initiate = function(listId) {
+  this.originId = listId;
+  this.originText = new Array();
+  for (var i = 0; i < listId.length; i++) {
+    this.originText.push(document.getElementById(listId[i]).innerHTML);
   };
-  cumulativeDelayTime.push(sum);
-};
+  this.cursorLine = document.getElementById('cursor-line');
+  
+  this.currentTimeout;
+  this.showCursor;
 
-// calls setTimeout for each line
-var typeLineTimeout = new Array();
-for (var i = 0; i < originId.length; i++) {
-  typeLineTimeout[i] = setTimeout((function(index) {
-    return function() {
-      cursorLine.className = 'hidden';
-      typeWriter(index);
-    }
-  })(i), cumulativeDelayTime[i]);
+  // calculated time delays
+  this.delayTime = [this.options.timeInit];
+  this.cumulativeDelayTime = [this.options.timeInit];
+  for (var i = 0; i < listId.length; i++) {
+    var elapsedTimeLine = this.originText[i].length * this.options.timeChar + this.options.timeGap + this.options.timeChar * 2;
+    this.delayTime.push(elapsedTimeLine);
+    var sum = 0;
+    for (var j = 0; j < this.delayTime.length; j++) {
+      sum += this.delayTime[j];
+    };
+    this.cumulativeDelayTime.push(sum);
+  };
+
+  // calls setTimeout for each line
+  this.typeLineTimeout = new Array();
+  for (var i = 0; i < listId.length; i++) {
+    this.typeLineTimeout[i] = setTimeout((function(index) {
+      return function() {
+        document.getElementById('cursor-line').className = 'hidden';
+        typing.typewriter(index);
+      }
+    })(i), this.cumulativeDelayTime[i]);
+  };
 
 };
 
 // stops all timeouts
-var skip = function() {
-  clearTimeout(currentTimeout);
-  clearTimeout(showCursor);
-  for (var i = 0; i < typeLineTimeout.length; i++) {
-    clearTimeout(typeLineTimeout[i]);
+typing.stop = function() {
+  clearTimeout(this.currentTimeout);
+  clearTimeout(this.showCursor);
+  for (var i = 0; i < this.typeLineTimeout.length; i++) {
+    clearTimeout(this.typeLineTimeout[i]);
   };
 };
 
 // rewrite text with value stored on page load
-
-// var rewriteText = function(index) {
-//   var loc = document.getElementById(originId[index]);
-//   loc.innerHTML = '&gt;&gt; ' + originText[index];
-//   loc.className = 'visible';
-// };
-
-var rewriteText = function(element, index, array) {
+typing.rewrite = function(element, index, array) {
   var loc = document.getElementById(element);
-  loc.innerHTML = '&gt;&gt; ' + originText[index];
+  loc.innerHTML = typing.options.prefix + typing.originText[index];
   loc.className = 'visible';
 };
 
-
-// trigger skip and rewrite on pressing enter or spacebar
+// trigger stop and rewrite on pressing enter or spacebar
 window.onkeydown = function(key){
   if (key.which === 13 || key.which === 32) {
-    skip();
-    originId.forEach(rewriteText);
-    document.getElementById('cursor-line').className = 'visible';
+    typing.stop();
+    typing.originId.forEach(typing.rewrite);
+    typing.cursorLine.className = 'visible';
   }
 };
+
+typing.initiate(['line1', 'line2', 'line3']);
