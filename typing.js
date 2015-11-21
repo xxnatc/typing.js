@@ -98,18 +98,19 @@ if (typing.options.skipOn) {
     loc.className = 'visible';
   };
 
+  typing.skip = function() {
+    this.stop();
+    for (var i = 0; i < typing.originId.length; i++) {
+      typing.rewrite(i);
+    };
+  }
+
   // trigger stop and rewrite on pressing specified keys
   window.onkeydown = function(key){
     if (typing.options.skipKeys.indexOf(key.which) > -1) {
-      typing.stop();
-      // typing.originId.forEach(typing.rewrite);
-
-      for (var i = 0; i < typing.originId.length; i++) {
-        typing.rewrite(i);
-      };
+      typing.skip();
     }
   };
 };
 
-typing.options.endCursor = true;
 typing.initiate(['line1', 'line2', 'line3']);
